@@ -7,13 +7,11 @@ from sklearn.model_selection import cross_val_score
 
 times = []
 mnist = input_data.read_data_sets("MNIST_data/")
-for i in range(1,3):
-  ray.init(start_ray_local=True, num_workers=10, num_local_schedulers=i)
-  before = time.time()
-  result = ray_cross_val.ray_cross_val_score(svm.SVC(), mnist.test.images, mnist.test.labels, cv=20)
-  times.append(time.time() - before)
-  before2 = time.time()
-  result2 = cross_val_score(svm.SVC(), mnist.test.images, mnist.test.labels, cv=20, n_jobs=-1)
-  after = time.time() - before2
-  print times[-1], after, result, result2
-  ray.worker.cleanup()
+before2 = time.time()
+result2 = cross_val_score(svm.SVC(), mnist.test.images, mnist.test.labels, cv=20, n_jobs=-1)
+after = time.time() - before2
+ray.init(start_ray_local=True, num_workers=10, num_local_schedulers=1)
+before = time.time()
+result = ray_cross_val.ray_cross_val_score(svm.SVC(), mnist.test.images, mnist.test.labels, cv=20)
+times.append(time.time() - before)
+print times[-1], after, result, result2
