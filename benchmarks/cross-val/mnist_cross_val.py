@@ -19,7 +19,8 @@ for fold in folds:
   after = time.time() - before
   times_skl_folds.append(after)
   print "SKL_folds ", times_skl_folds
-data = ray.init(start_ray_local=True, num_workers=2, num_local_schedulers=1)
+data = ray.init(start_ray_local=True, num_workers=2)
+print data
 for i in workers:
   before = time.time()
 #  result = ray_cross_val.ray_cross_val_score(svm.SVC(), mnist.test.images, mnist.test.labels, cv=16)
@@ -30,8 +31,9 @@ for i in workers:
       result = ray_cross_val.ray_cross_val_score(svm.SVC(), mnist.test.images, mnist.test.labels, cv=fold)
       times_ray_folds.append(time.time() - before)
       print "Ray_folds ", times_ray_folds
-  ray.services.start_worker(data["node_ip_address"], data["store_socket_name"], data["manager_socket_name"], data["local_scheduler_socket_name"], data["redis_address"], worker_path, True, False)
-  ray.services.start_worker(data["node_ip_address"], data["store_socket_name"], data["manager_socket_name"], data["local_scheduler_socket_name"], data["redis_address"], worker_path, True, False)
+  object_store = data["object_store_addresses"][0]
+  ray.services.start_worker(data["node_ip_address"], object_store.name, object_store.manager_name, data["local_scheduler_socket_names"][0], data["redis_address"], worker_path, True, False)
+  ray.services.start_worker(data["node_ip_address"], object_store.name, object_store.manager_name, data["local_scheduler_socket_names"][0], data["redis_address"], worker_path, True, False)
   print "Ray_workers ", times_ray_workers
 
 with open("results.txt", "w") as resultfile:
