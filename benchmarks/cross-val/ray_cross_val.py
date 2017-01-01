@@ -24,9 +24,7 @@ def ray_cross_val_score(estimator, X, y=None, groups=None, scoring=None, cv=None
     X, y, groups = indexable(X, y, groups)
 
     cv = check_cv(cv, y, classifier=is_classifier(estimator))
-    ray.register_class(type(estimator))
     scorer = check_scoring(estimator, scoring=scoring)
-    ray.register_class(type(scorer), pickle=True)
     # We clone the estimator to make sure that all the folds are
     # independent, and that it is pickle-able.
     scores = [ray_fit_and_score.remote(clone(estimator), X, y, scorer,
