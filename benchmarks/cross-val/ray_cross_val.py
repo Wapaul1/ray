@@ -7,6 +7,10 @@ from sklearn.utils import indexable
 from sklearn.model_selection._split import check_cv
 from sklearn.metrics.scorer import check_scoring
 import numpy as np
+from sklearn import svm
+
+ray.register_class(type(svm.SVC()))
+ray.register_class(type(check_scoring(svm.SVC())), pickle=True)
 
 @ray.remote
 def ray_fit_and_score(estimator, X, y, scorer, train, test, verbose,
