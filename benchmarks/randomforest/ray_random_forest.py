@@ -7,11 +7,13 @@ from sklearn.tree._tree import DTYPE, DOUBLE, Tree
 from sklearn.tree import DecisionTreeClassifier
 import numpy as np
 from scipy.sparse import issparse
+from sklearn.utils.fixes import bincount
 import warnings
 from warnings import warn
 import ray
 import time
 import IPython
+import copy
 
 ray.register_class(DecisionTreeClassifier)
 ray.register_class(Tree, pickle=True)
@@ -27,8 +29,16 @@ def _generate_sample_indices(random_state, n_samples):
 def ray_parallel_build_trees(tree, forest, X, y, sample_weight, tree_idx, n_trees,
                             verbose=0, class_weight=None):
     """Private function used to fit a single tree in parallel."""
-    X = X.copy()
-    y = y.copy()
+    tree = copy.deepcopy(ray.get(ray.put(tree)))
+    forest = copy.deepcopy(ray.get(ray.put(forest)))
+    X = copy.deepcopy(ray.get(ray.put(X)))
+    y = copy.deepcopy(ray.get(ray.put(y)))
+    sample_weight = copy.deepcopy(ray.get(ray.put(sample_weight)))
+    tree_idx = copy.deepcopy(ray.get(ray.put(tree_idx)))
+    n_trees = copy.deepcopy(ray.get(ray.put(n_trees)))
+    verbose = copy.deepcopy(ray.get(ray.put(verbose)))
+    class_weight = copy.deepcopy(ray.get(ray.put(class_weight)))
+    before = time.time()
     if verbose > 1:
         print("building tree %d of %d" % (tree_idx + 1, n_trees))
     
@@ -52,7 +62,7 @@ def ray_parallel_build_trees(tree, forest, X, y, sample_weight, tree_idx, n_tree
         tree.fit(X, y, sample_weight=curr_sample_weight, check_input=False)
     else:
         tree.fit(X, y, sample_weight=sample_weight, check_input=False)
-
+    print "Time spent:", time.time() - before
     return tree
 
 @ray.remote
