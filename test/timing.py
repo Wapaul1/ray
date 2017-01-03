@@ -20,6 +20,6 @@ def test_copy(X):
 
 ray.init(start_ray_local=True)
 
-array = np.random.randint(0, 100, (100000, 784))
-print np.mean([ray.get(test_nocopy.remote(array)) for _ in range(100)])
-print np.mean([ray.get(test_copy.remote(array)) for _ in range(100)])
+array = np.random.randint(0, 100, (10000, 784))
+print np.mean(ray.get([test_nocopy.remote(array) for _ in range(5)]))
+print np.mean(ray.get([test_copy.remote(array) for _ in range(5)]))
