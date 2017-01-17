@@ -89,26 +89,32 @@ NUM_BATCHES = 1
 NUM_ITERS = 201
 
 def net_vars_initializer():
-  # Seed TensorFlow to make the script deterministic.
-  tf.set_random_seed(0)
-  # Define the inputs.
-  x_data = tf.placeholder(tf.float32, shape=[BATCH_SIZE])
-  y_data = tf.placeholder(tf.float32, shape=[BATCH_SIZE])
-  # Define the weights and computation.
-  w = tf.Variable(tf.random_uniform([1], -1.0, 1.0))
-  b = tf.Variable(tf.zeros([1]))
-  y = w * x_data + b
-  # Define the loss.
-  loss = tf.reduce_mean(tf.square(y - y_data))
-  optimizer = tf.train.GradientDescentOptimizer(0.5)
-  train = optimizer.minimize(loss)
-  # Define the weight initializer and session.
-  init = tf.global_variables_initializer()
-  sess = tf.Session()
-  # Additional code for setting and getting the weights.
-  variables = ray.experimental.TensorFlowVariables(loss, sess)
-  # Return all of the data needed to use the network.
-  return variables, sess, train, loss, x_data, y_data, init
+  # Prefix should be random so that there is no conflict with variable names in
+  # the cluster setting.
+  prefix = str(np.random.randint(100000))
+  # Use tensorflow's variable_scope to ' prefix all of the variables
+  with tf.variable_scope(prefix):
+    # Seed TensorFlow to make the script deterministic.
+    tf.set_random_seed(0)
+    # Define the inputs.
+    x_data = tf.placeholder(tf.float32, shape=[BATCH_SIZE])
+    y_data = tf.placeholder(tf.float32, shape=[BATCH_SIZE])
+    # Define the weights and computation.
+    w = tf.Variable(tf.random_uniform([1], -1.0, 1.0))
+    b = tf.Variable(tf.zeros([1]))
+    y = w * x_data + b
+    # Define the loss.
+    loss = tf.reduce_mean(tf.square(y - y_data))
+    optimizer = tf.train.GradientDescentOptimizer(0.5)
+    train = optimizer.minimize(loss)
+    # Define the weight initializer and session.
+    init = tf.global_variables_initializer()
+    sess = tf.Session()
+    # Additional code for setting and getting the weights, and pass in the
+    # prefix so that the variable names can be converted between workers.
+    variables = ray.experimental.TensorFlowVariables(loss, sess, prefix)
+    # Return all of the data needed to use the network.
+    return variables, sess, train, loss, x_data, y_data, init
 
 def net_vars_reinitializer(net_vars):
   return net_vars

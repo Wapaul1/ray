@@ -28,11 +28,12 @@ class TensorFlowVariables(object):
       passed to.
     assignment_nodes (List[tf.Tensor]): The nodes that assign the weights.
   """
-  def __init__(self, loss, sess=None):
+  def __init__(self, loss, sess=None, prefix=None):
     """Creates a TensorFlowVariables instance."""
     import tensorflow as tf
     self.sess = sess
     self.loss = loss
+    self.prefix = prefix
     variable_names = [op.node_def.name for op in loss.graph.get_operations() if op.node_def.op == "Variable"]
     self.variables = [v for v in tf.trainable_variables() if v.op.node_def.name in variable_names]
     self.assignment_placeholders = dict()
@@ -70,9 +71,15 @@ class TensorFlowVariables(object):
   def get_weights(self):
     """Returns the weights of the variables of the loss function in a list."""
     self._check_sess()
-    return {v.op.node_def.name: v.eval(session=self.sess) for v in self.variables}
-
+    if self.prefix is None:
+      weights = {v.op.node_def.name: v.eval(session=self.sess) for v in self.variables}
+    else:
+      weights = {v.op.node_def.name.split(self.prefix + "/", 1)[1]: v.eval(session=self.sess) for v in self.variables}
+    return weights
   def set_weights(self, new_weights):
     """Sets the weights to new_weights."""
     self._check_sess()
-    self.sess.run(self.assignment_nodes, feed_dict={self.assignment_placeholders[name]: value for (name, value) in new_weights.items()})
+    if self.prefix is None:
+      self.sess.run(self.assignment_nodes, feed_dict={self.assignment_placeholders[name]: value for (name, value) in new_weights.items()})
+    else:  
+      self.sess.run(self.assignment_nodes, feed_dict={self.assignment_placeholders[self.prefix + "/" + name]: value for (name, value) in new_weights.items()})
