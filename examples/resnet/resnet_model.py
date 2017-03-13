@@ -118,12 +118,12 @@ class ResNet(object):
 
   def _build_train_op(self):
     """Build training specific ops for the graph."""
-    rate = self.hps.lrn_rate
+    self.lrn_rate = self.hps.lrn_rate
     num_gpus = self.hps.num_gpus if self.hps.num_gpus != 0 else 1
     # The learning rate schedule is dependent on the number of gpus.
-    boundaries = [int(20000 * i / np.sqrt(num_gpus)) for i in range(2, 5)]
-    values = [0.1, 0.01, 0.001, 0.0001]
-    self.lrn_rate = tf.train.piecewise_constant(self.global_step, boundaries, values)
+#    boundaries = [int(20000 * i / np.sqrt(num_gpus)) for i in range(2, 5)]
+#    values = [0.1, 0.01, 0.001, 0.0001]
+#    self.lrn_rate = tf.train.piecewise_constant(self.global_step, boundaries, values)
     tf.summary.scalar('learning rate', self.lrn_rate)
 
     if self.hps.optimizer == 'sgd':
