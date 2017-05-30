@@ -20,20 +20,20 @@ total_num_nodes = 5
 @ray.remote(num_gpus=1)
 def use_one_gpus():
   assert len(ray.get_gpu_ids()) == 1
-  time.sleep(2)
+  time.sleep(4)
   return ray.get_gpu_ids()
 
 
 @ray.remote(num_gpus=2)
 def use_two_gpus():
   assert len(ray.get_gpu_ids()) == 2
-  time.sleep(2)
+  time.sleep(4)
   return ray.get_gpu_ids()
 
 @ray.remote(num_gpus=2)
 def use_two_gpus_long():
   assert len(ray.get_gpu_ids()) == 2
-  time.sleep(6)
+  time.sleep(9)
   return ray.get_gpu_ids()
 
 @ray.remote(num_gpus=1)
