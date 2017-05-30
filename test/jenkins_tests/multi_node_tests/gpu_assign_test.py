@@ -18,8 +18,8 @@ from ray.test.multi_node_tests import (_wait_for_nodes_to_join,
 total_num_nodes = 5
 
 @ray.remote(num_gpus=1)
-def use_one_gpus():
-  time_started = time.time()
+def use_one_gpus(ti):
+  time_started = time.time() - ti
   assert len(ray.get_gpu_ids()) == 1
   time.sleep(4)
   return time_started, ray.get_gpu_ids()
@@ -67,7 +67,7 @@ def driver(redis_address):
   _wait_for_nodes_to_join(total_num_nodes)
 
   # Test that all gpus can be used at the same time using single gpu tasks.
-  gpus = [use_one_gpus.remote() for _ in range(30)]
+  gpus = [use_one_gpus.remote(time.time()) for _ in range(30)]
   print(ray.get(gpus))
   assert sum([ele for l in ray.get(gpus) for ele in l]) == 150
 
