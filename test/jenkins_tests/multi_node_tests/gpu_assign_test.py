@@ -67,6 +67,7 @@ def driver(redis_address):
 
   # Test that all gpus can be used at the same time using single gpu tasks.
   gpus = [use_one_gpus.remote() for _ in range(30)]
+  print(ray.get(gpus))
   assert sum([ele for l in ray.get(gpus) for ele in l]) == 150
 
   # Test that all gpus can be used at the same time using double gpu tasks.
