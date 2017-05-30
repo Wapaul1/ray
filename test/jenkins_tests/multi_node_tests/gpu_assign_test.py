@@ -66,40 +66,36 @@ def driver(redis_address):
   _wait_for_nodes_to_join(total_num_nodes)
 
   # Test that all gpus can be used at the same time using single gpu tasks.
-
   gpus = [use_one_gpus.remote() for _ in range(30)]
-  assert sum(ray.get(gpus)) == 150
+  assert sum([ele for l in ray.get(gpus) for ele in l]) == 150
 
   # Test that all gpus can be used at the same time using double gpu tasks.
   gpus = [use_two_gpus.remote() for _ in range(15)]
   assert sum([ele for l in ray.get(gpus) for ele in l]) == 150
 
-  # Test that all gpus can be used at the same time using single and double gpu tasks.
-  gpus_1 = [use_one_gpus.remote() for _ in range(14)]
-  gpus_2 = [use_two_gpus.remote() for _ in range(8)] 
-  gpus = ray.get(gpus_1) + [ele for l in ray.get(gpus_2) for ele in l]
-  assert sum(gpus) == 150
 
+  # Test that all gpus can be used at the same time using single and double gpu tasks.
+  gpus = [use_one_gpus.remote() for _ in range(14)] + [use_two_gpus.remote() for _ in range(8)] 
+  assert sum([ele for l in ray.get(gpus) for ele in l]) == 150
 
   actors = [Actor4.remote() for _ in range(2)] + [Actor1.remote() for _ in range(4)]
-  actor_gpus = ray.get([actor.check_ids() for actor in actors])
-  actor_gpus = actor_gpus[0] + actor_gpus[1] + actor_gpus[2:]
-  gpus = sum(ray.get([use_one_gpus.remote() for _ in range(18)]) + actor_gpus)
-  assert gpus == 150
+  actor_gpus = [ele for l in ray.get([actor.check_ids() for actor in actors]) for ele in l]
+  gpus = ray.get([use_one_gpus.remote() for _ in range(18)])
+  assert sum([ele for l in gpus for ele in l]) + sum(actor_gpus) == 150
 
   # Check that task gpus do not intersect with actor gpus.
   gpus = ray.get([use_one_gpus.remote() for _ in range(100)])
-  assert len(set(gpus).intersection(set(actor_gpus))) == 0
+  assert len(set([ele for l in gpus for ele in l]).intersection(set(actor_gpus))) == 0
 
   # Check that multiple tasks do not intersect with other tasks.
   task_gpus = use_two_gpus_long.remote()
   gpus = ray.get([use_one_gpus.remote() for _ in range(28)])
-  assert len(set(gpus).intersection(set(task_gpus))) == 0
+  assert len(set([ele for l in gpus for ele in l]).intersection(set(task_gpus))) == 0
 
   # Check that actors have unique ids.
   actors_2 = [Actor4.remote() for _ in range(4)] + [Actor1.remote() for _ in range(2)]
   actor_gpus_2 = ray.get([actor.check_ids() for actor in actors_2])
-  gpus = sum(actor_gpus) + sum([sum(gpus) for gpus in actor_gpus_2[:4]]) + sum(actor_gpus_2[4:])
+  gpus = sum(actor_gpus) + sum([sum(gpus) for gpus in actor_gpus_2])
   assert gpus == 150
 
 if __name__ == "__main__":
