@@ -65,9 +65,10 @@ def driver(redis_address):
 
   # Wait for all the nodes to join the cluster.
   _wait_for_nodes_to_join(total_num_nodes)
-
+  time.sleep(10)
   # Test that all gpus can be used at the same time using single gpu tasks.
-  gpus = [use_one_gpus.remote(time.time()) for _ in range(30)]
+  ti = ray.put(time.time())
+  gpus = [use_one_gpus.remote(ti) for _ in range(30)]
   print(ray.get(gpus))
   assert sum([ele for l in ray.get(gpus) for ele in l]) == 150
 
